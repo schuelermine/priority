@@ -41,7 +41,7 @@ author:             Anselm Schüler
 maintainer:         mail@anselmschueler.com
 
 -- A copyright notice.
-copyright: ⓒ 2022 Anselm Schüler
+copyright:          ⓒ 2022 Anselm Schüler
 
 -- The category of the package.
 category:           Data
@@ -50,14 +50,23 @@ category:           Data
 extra-source-files: CHANGELOG.md
 
 library
-    -- Modules exported by the library.
-    exposed-modules:  Data.Priority
+  -- Modules exported by the library.
+  exposed-modules:  Data.Priority
 
-    -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.15.1.0, ordering-util ^>= 0.1.0.0
+  -- Other library packages from which modules are imported.
+  build-depends:
+    , base           >=4.14 && <4.16
+    , ordering-util  ^>=0.1.0.0
 
-    -- Directories containing source files.
-    hs-source-dirs:   src
+  -- Directories containing source files.
+  hs-source-dirs:   src
 
-    -- Base language which the package is written in.
-    default-language: Haskell2010
+  -- Base language which the package is written in.
+  default-language: Haskell2010
+
+test-suite tests
+  type:             detailed-0.9
+  test-module:      Tests
+  build-depends:    QuickCheck ^>= 2.14.2
+  hs-source-dirs:   test
+  default-language: Haskell2010

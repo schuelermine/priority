@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 
-module Data.Priority (Priority(..), compareBase) where
+module Data.Priority (Priority(..), higher, lower, compareBase) where
 
 import Data.Ordering (ifEQ, flipOrdering)
 
@@ -13,17 +13,17 @@ higher :: t -> Priority t
 higher a = Higher (Base a)
 
 instance Ord b => Ord (Priority b) where
-    compare (Lower p) (Lower q)   = compare p q
-    compare (Lower p) (Base b)    = ifEQ LT (compareBase p b)
-    compare (Lower p) (Higher q)  = ifEQ LT (compare p q)
-    compare (Base a) (Lower q)    = ifEQ GT (flipOrdering $ compareBase q a)
-    compare (Base a) (Base b)     = compare a b
-    compare (Base a) (Higher q)   = ifEQ LT (flipOrdering $ compareBase q a) 
-    compare (Higher p) (Lower q)  = ifEQ GT (compare p q)
-    compare (Higher p) (Base b)   = ifEQ GT (compareBase p b)
-    compare (Higher p) (Higher q) = compare p q
+    compare   (Lower p)    (Lower q)  = compare p q
+    compare x@(Lower p)    (Base b)   = compareBase x b
+    compare   (Lower p)  y@(Higher q) = ifEQ LT $ compare p y
+    compare   (Base a)   y@(Lower q)  = flipOrdering $ compareBase y a
+    compare   (Base a)     (Base b)   = compare a b
+    compare   (Base a)   y@(Higher q) = flipOrdering $ compareBase y a
+    compare   (Higher p) y@(Lower q)  = ifEQ GT $ compare p y
+    compare x@(Higher p)   (Base b)   = compareBase x b
+    compare   (Higher p)   (Higher q) = compare p q
 
 compareBase :: Ord t => Priority t -> t -> Ordering
-compareBase (Lower p) b  = ifEQ LT (compareBase p b)
-compareBase (Base a) b   = compare a b
+compareBase (Lower p)  b = ifEQ LT (compareBase p b)
+compareBase (Base a)   b = compare a b
 compareBase (Higher p) b = ifEQ GT (compareBase p b)
