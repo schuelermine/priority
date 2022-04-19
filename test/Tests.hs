@@ -130,6 +130,11 @@ tests =
                   { name = "Higher-x-gt-x",
                     tags = ["Ord", "Higher", "Integer"],
                     property = \x -> Higher x > x
+                  },
+                QCTest
+                  { name = "Higher-x-gt-Lower-x",
+                    tags = ["Ord", "Higher", "Lower", "Integer"],
+                    property = \x -> Higher x > Lower x
                   }
               ]
               ++ [ Group
