@@ -1,10 +1,13 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Data.Priority (Priority(..), higher, lower, compareBase) where
 
 import Data.Ordering (ifEQ, flipOrdering)
+import GHC.Generics (Generic)
 
-data Priority t = Base t | Higher (Priority t) | Lower (Priority t) deriving (Eq, Show, Read, Functor)
+data Priority t = Base t | Higher (Priority t) | Lower (Priority t)
+    deriving (Eq, Show, Read, Functor, Generic)
 
 lower :: t -> Priority t
 lower a = Lower (Base a)
