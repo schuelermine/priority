@@ -1,8 +1,22 @@
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DisambiguateRecordFields #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use /=" #-}
+{-# HLINT ignore "Use ==" #-}
+{-# HLINT ignore "Redundant compare" #-}
+{-# HLINT ignore "Use >" #-}
+{-# HLINT ignore "Use <" #-}
 
 module Tests (tests) where
 
@@ -117,7 +131,7 @@ tests :: IO [Test]
 tests =
   return
     [ Group
-        { groupName = "pure-QuickCheck-Integer",
+        { groupName = "pure-QuickCheck-Priority-Integer",
           concurrently = True,
           groupTests =
             getTests @(Priority Integer -> Bool)
@@ -138,27 +152,122 @@ tests =
                   }
               ]
               ++ [ Group
-                     { groupName = "pure-QuickCheck-Integer-compareBase",
+                     { groupName = "pure-QuickCheck-Eq-Laws-Priority-Integer",
                        concurrently = True,
                        groupTests =
-                         getTests @(Priority Integer -> Bool)
-                           [ QCTest
-                               { name = "compareBase-lower-x-to-x-is-LT",
-                                 tags = ["compareBase", "Lower", "lower", "Integer"],
-                                 property = \x -> compareBase (lower x) x == LT
-                               },
-                             QCTest
-                               { name = "compareBase-Base-x-to-x-is-EQ",
-                                 tags = ["compareBase", "Base", "Integer"],
-                                 property = \x -> compareBase (Base x) x == EQ
-                               },
-                             QCTest
-                               { name = "compareBase-higher-x-to-x-is-GT",
-                                 tags = ["compareBase", "Higher", "higher", "Integer"],
-                                 property = \x -> compareBase (higher x) x == GT
-                               }
-                           ]
+                         [ eqReflexiveTest @(Priority Integer),
+                           eqTransitiveTest @(Priority Integer),
+                           eqIsNotNeqTest @(Priority Integer),
+                           neqIsNotEqTest @(Priority Integer)
+                         ]
+                     },
+                   Group
+                     { groupName = "pure-QuickCheck-Eq-never-id",
+                       concurrently = True,
+                       groupTests =
+                         [ functionIsNeverIdTest @(Priority Integer) Lower "Lower",
+                           functionIsNeverIdTest @(Priority Integer) Higher "Higher"
+                         ]
                      }
                  ]
         }
     ]
+
+eqReflexiveTest :: forall a t. (Eq a, Testable t, t ~ (InfiniteList a -> Bool)) => Test
+eqReflexiveTest =
+  getTest
+    QCTest
+      { name = "Eq-eqReflexive",
+        tags = ["Ord", "(==)", "reflexivity"],
+        property = (\(getInfiniteList -> (x : _)) -> x == x) :: t
+      }
+
+eqTransitiveTest :: forall a t. (Eq a, Testable t, t ~ (InfiniteList a -> Property)) => Test
+eqTransitiveTest =
+  getTest
+    QCTest
+      { name = "Eq-eqTransitive",
+        tags = ["Eq", "(==)", "transitivity"],
+        property = (\(getInfiniteList -> (x : y : z : _)) -> x == y && y == z ==> x == z) :: t
+      }
+
+eqIsNotNeqTest :: forall a t. (Eq a, Testable t, t ~ (InfiniteList a -> Property)) => Test
+eqIsNotNeqTest =
+  getTest
+    QCTest
+      { name = "Eq-eqIsNotNeq",
+        tags = ["Eq", "(/=)", "(==)"],
+        property = (\(getInfiniteList -> (x : y : _)) -> x == y ==> not $ x /= y) :: t
+      }
+
+neqIsNotEqTest :: forall a t. (Eq a, Testable t, t ~ (InfiniteList a -> Property)) => Test
+neqIsNotEqTest =
+  getTest
+    QCTest
+      { name = "Eq-NeqIsNotEq",
+        tags = ["Eq", "(/=)", "(==)"],
+        property = (\(getInfiniteList -> (x : y : _)) -> x /= y ==> not $ x == y) :: t
+      }
+
+compareLTIsLt :: forall a t. (Ord a, Testable t, t ~ (InfiniteList a -> Property), Ord a) => Test
+compareLTIsLt =
+  getTest
+    QCTest
+      { name = "Eq-compareEQisEq",
+        tags = ["Eq", "compare", "LT", "(<)"],
+        property = (\(getInfiniteList -> (x : y : _)) -> compare x y == LT ==> x < y) :: t
+      }
+
+ltIsCompareLT :: forall a t. (Ord a, Testable t, t ~ (InfiniteList a -> Property), Ord a) => Test
+ltIsCompareLT =
+  getTest
+    QCTest
+      { name = "Eq-compareEQisEq",
+        tags = ["Eq", "compare", "LT", "(<)"],
+        property = (\(getInfiniteList -> (x : y : _)) -> x < y ==> compare x y == LT) :: t
+      }
+
+compareEQIsEq :: forall a t. (Ord a, Testable t, t ~ (InfiniteList a -> Property), Ord a) => Test
+compareEQIsEq =
+  getTest
+    QCTest
+      { name = "Eq-compareEQisEq",
+        tags = ["Eq", "compare", "EQ", "(==)"],
+        property = (\(getInfiniteList -> (x : y : _)) -> compare x y == EQ ==> x == y) :: t
+      }
+
+eqIsCompareEQ :: forall a t. (Ord a, Testable t, t ~ (InfiniteList a -> Property), Ord a) => Test
+eqIsCompareEQ =
+  getTest
+    QCTest
+      { name = "Eq-compareEQisEq",
+        tags = ["Eq", "compare", "EQ", "(==)"],
+        property = (\(getInfiniteList -> (x : y : _)) -> x == y ==> compare x y == EQ) :: t
+      }
+
+compareGTIsGt :: forall a t. (Ord a, Testable t, t ~ (InfiniteList a -> Property), Ord a) => Test
+compareGTIsGt =
+  getTest
+    QCTest
+      { name = "Eq-compareEQisEq",
+        tags = ["Eq", "compare", "GT", "(>)"],
+        property = (\(getInfiniteList -> (x : y : _)) -> compare x y == GT ==> x > y) :: t
+      }
+
+gtIsCompareGT :: forall a t. (Ord a, Testable t, t ~ (InfiniteList a -> Property), Ord a) => Test
+gtIsCompareGT =
+  getTest
+    QCTest
+      { name = "Eq-compareEQisEq",
+        tags = ["Eq", "compare", "GT", "(>)"],
+        property = (\(getInfiniteList -> (x : y : _)) -> x > y ==> compare x y == GT) :: t
+      }
+
+functionIsNeverIdTest :: forall a t. (Eq a, Testable t, t ~ (InfiniteList a -> Bool)) => (a -> a) -> String -> Test
+functionIsNeverIdTest f n =
+  getTest
+    QCTest
+      { name = "Eq-functionIsNeverId-" ++ n,
+        tags = ["Eq", "id", "(/=)", n],
+        property = \(getInfiniteList -> (x : y : _)) -> f x /= x
+      }
