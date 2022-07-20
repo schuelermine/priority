@@ -14,10 +14,12 @@ category:           Data
 extra-source-files: CHANGELOG.md
 
 library
-  exposed-modules:  Data.Priority
+  exposed-modules:  Data.Adjustable
+                    Data.BinaryOffset
+                    Data.Subpriority
   build-depends:
     ordering-util   ^>=0.1.0.0,
-    base            >=4.14 && <4.16
+    base            >=4.14 && <5
   hs-source-dirs:   lib
   default-language: Haskell2010
 
@@ -27,7 +29,7 @@ test-suite tests
   build-depends:
     QuickCheck      ^>=2.14.2,
     Cabal           ^>=3.6.3,
-    base            >=4.14 && <4.16,
+    base            >=4.14 && <5,
     priority
   hs-source-dirs:   test
   default-language: Haskell2010
